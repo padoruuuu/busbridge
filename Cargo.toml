@@ -1,0 +1,42 @@
+[package]
+name = "busbridge"
+version = "0.1.0"
+edition = "2021"
+description = "Bidirectional D-Bus <-> Varlink compatibility and migration layer"
+
+# See docs/DESIGN_BRIEF_V1.md Section 10 for the phase-0 crate list and
+# rationale, and docs/ARCHITECTURE.md for the current architecture and roadmap.
+[dependencies]
+zbus = { version = "4", default-features = false, features = ["tokio"] }
+zvariant = "4"
+quick-xml = "0.31"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "macros", "fs", "signal", "process", "io-util", "sync"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.7"
+inotify = { version = "0.10", optional = true }
+async-trait = "0.1"
+futures-util = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+libc = "0.2"
+rand = "0.8"
+
+[dev-dependencies]
+tempfile = "=3.10.1"
+
+[features]
+default = ["inotify-watch"]
+# Keep the hot-reload backend swappable per docs/DESIGN_BRIEF_V1.md Section 9 -
+# inotify-watch should be the Linux-native impl behind a generic
+# ConfigWatcher trait, not hardcoded into config/mod.rs directly.
+inotify-watch = ["dep:inotify"]
+
+
+[lib]
+name = "busbridge"
+path = "src/lib.rs"
+
+[[bin]]
+name = "busbridge"
+path = "src/main.rs"

@@ -1,0 +1,44 @@
+# Example service-mapping config. See docs/DESIGN_BRIEF_V1.md Section 3.2 for the full
+# schema description and rationale. Copy to `sni-watcher.toml` (drop the
+# .example suffix) in this directory to activate it.
+#
+# This is the running example used throughout docs/DESIGN_BRIEF_V1.md (Status Notifier
+# Item/Watcher) - a reasonable first real interface to implement end-to-end
+# per the build order in docs/DESIGN_BRIEF_V1.md Section 6.
+
+[service]
+bus = "session"                                # "session" | "system"
+name = "org.kde.StatusNotifierWatcher"
+object_path = "/StatusNotifierWatcher"
+introspection_xml = "sni-watcher.xml"          # see docs/ for an example
+idle_timeout_secs = 30
+
+[varlink]
+listen = "unix:/run/user/1000/busbridge/sni.sock"   # inbound push, §2.2
+backend = "unix:/run/user/1000/tray-backend.sock"            # outbound calls, §2.3
+
+[[method]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_method = "RegisterStatusNotifierItem"
+varlink_method = "org.example.tray.Register"
+args = ["service"]
+
+[[signal]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_signal = "StatusNotifierItemRegistered"
+direction = "inbound_push"
+
+[[property]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_property = "RegisteredStatusNotifierItems"
+varlink_method = "org.example.tray.ListRegistered"
+
+# Enables Varlink-only tray item apps (no D-Bus connection of their own)
+# to appear as real, individually-addressable D-Bus objects to legacy
+# D-Bus-only tray hosts. See docs/DESIGN_BRIEF_V1.md Section 2.5.
+[[registrable]]
+dbus_interface = "org.kde.StatusNotifierItem"
+path_prefix = "/StatusNotifierItem"
+introspection_xml = "sni-item.xml"
+register_via = "org.example.tray.RegisterItem"
+id_source = "generated"

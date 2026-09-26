@@ -1,0 +1,20 @@
+# D-Bus bus-activation service file. This mechanism belongs to the message
+# bus daemon (dbus-daemon / dbus-broker), NOT to any init system - it works
+# identically under systemd, sysvinit, runit, s6, dinit, OpenRC, etc.
+# See docs/DESIGN_BRIEF_V1.md Section 2.1 and Section 4.
+#
+# Deliberately NOT using SystemdService= here (a systemd-only extension to
+# this file format) - multi-name-single-process consolidation is handled
+# entirely by this project's own userspace control channel instead
+# (docs/DESIGN_BRIEF_V1.md Section 2.1). Every additional D-Bus name this bridge owns gets
+# its own copy of this template, all pointing at the same Exec= binary;
+# the control channel makes repeated activation a no-op hand-off rather
+# than a second resident process.
+#
+# Install to: /usr/share/dbus-1/services/ (session bus) or
+#             /usr/share/dbus-1/system-services/ (system bus, plus a
+#             matching D-Bus policy file to allow the name)
+
+[D-BUS Service]
+Name=org.kde.StatusNotifierWatcher
+Exec=/usr/libexec/busbridge

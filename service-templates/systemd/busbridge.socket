@@ -1,0 +1,26 @@
+# Optional systemd socket-activation unit for busbridge's own control /
+# app-registration socket (docs/REGISTRATION_PROTOCOL.md's "the address").
+# See ../systemd/README.md for what this buys you and why it's entirely
+# optional - busbridge binds this socket itself if this unit isn't
+# installed, with completely identical resulting behavior.
+#
+# %t expands to $XDG_RUNTIME_DIR for a --user unit (session bus) or /run
+# for a system unit (system bus) - install the same file either way,
+# matching control.rs::default_paths's own fallback logic for the
+# non-socket-activated case.
+#
+# Install to (pick one, matching your deployment):
+#   ~/.config/systemd/user/busbridge.socket        (session bus, per-user)
+#   /etc/systemd/system/busbridge.socket            (system bus)
+# then: systemctl --user enable --now busbridge.socket   (or without --user)
+
+[Unit]
+Description=busbridge control and app-registration socket
+
+[Socket]
+ListenStream=%t/busbridge/busbridge.sock
+# Matches control.rs::paths_in's socket filename exactly - if that ever
+# changes, this line has to change with it.
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,26 @@
+# Optional systemd companion unit for busbridge.socket (see that file).
+# Deliberately plain - no SystemdService=, no Type=notify, nothing
+# systemd-specific beyond the standard socket-activation pairing
+# convention any two units use. busbridge detects the inherited fd
+# itself via LISTEN_PID/LISTEN_FDS (src/activation.rs), the same
+# non-systemd-specific mechanism other supervisors (s6, runit, ...)
+# implement - see docs/DESIGN_BRIEF_V1.md Section 4's hard constraints.
+#
+# Install alongside busbridge.socket (same directory, same scope).
+
+[Unit]
+Description=busbridge: D-Bus <-> Varlink compatibility and migration layer
+Requires=busbridge.socket
+After=busbridge.socket
+
+[Service]
+ExecStart=/usr/libexec/busbridge
+# Not Type=oneshot / not Restart=always by default: busbridge exits on
+# its own once idle (docs/ARCHITECTURE.md), and re-activates the same
+# way any bus-activated or socket-activated process does - via the next
+# connection to busbridge.socket or the next D-Bus activation of one of
+# its configured names (../dbus-1/*.service.example). If your deployment
+# wants it to stay resident regardless of idle-exit instead, raise
+# idle_timeout_secs in the relevant conf.d/*.toml `[service]` block(s)
+# rather than fighting systemd's own restart semantics against
+# busbridge's own idle-exit.

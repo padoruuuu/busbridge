@@ -1,0 +1,68 @@
+<!--
+  Example D-Bus introspection XML for org.kde.StatusNotifierItem, the
+  *item* side of the StatusNotifierItem/Watcher pair (see
+  docs/sni-watcher.xml.example for the watcher side). Referenced by the
+  `[[registrable]]` block in conf.d/sni-watcher.toml.example's
+  `introspection_xml` field, and by tests/sni_tray.rs.
+
+  This is the authoritative source of D-Bus-side types for a *dynamically
+  registered* item object (docs/ARCHITECTURE.md Section 4) - the same
+  role docs/sni-watcher.xml.example plays for the fixed watcher object,
+  just loaded once per registration instead of once at startup.
+
+  Includes org.freedesktop.DBus.Properties explicitly: dynamic objects
+  have no interface list to fall back on other than what's declared here
+  (see the doc comment on `DynamicObject::interfaces` in
+  src/dbus/dynamic_object.rs), so a legacy D-Bus host's Get/GetAll/Set
+  calls need their own arg descriptions the same as any other method -
+  there's no auto-generated Properties interface the way a real D-Bus
+  library would normally compose one in.
+
+  This is a trimmed illustrative example, not a complete or verified copy
+  of the real freedesktop SNI specification - verify against the current
+  spec before shipping.
+-->
+<node name="/StatusNotifierItem">
+  <interface name="org.kde.StatusNotifierItem">
+    <method name="Activate">
+      <arg name="x" type="i" direction="in"/>
+      <arg name="y" type="i" direction="in"/>
+    </method>
+    <method name="SecondaryActivate">
+      <arg name="x" type="i" direction="in"/>
+      <arg name="y" type="i" direction="in"/>
+    </method>
+    <method name="Scroll">
+      <arg name="delta" type="i" direction="in"/>
+      <arg name="orientation" type="s" direction="in"/>
+    </method>
+    <property name="Id" type="s" access="read"/>
+    <property name="Category" type="s" access="read"/>
+    <property name="Status" type="s" access="read"/>
+    <property name="IconName" type="s" access="read"/>
+    <!-- Bespoke signals, not PropertiesChanged - see
+         docs/ARCHITECTURE.md Section 3/4 on why these are modeled as
+         their own signals rather than folded into a generic
+         PropertiesChanged the way a mechanical translator might assume. -->
+    <signal name="NewIcon"/>
+    <signal name="NewStatus">
+      <arg name="status" type="s"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="out"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="values" type="a{sv}" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+  </interface>
+</node>

@@ -1,0 +1,24 @@
+<!--
+  Example D-Bus introspection XML for org.kde.StatusNotifierWatcher,
+  referenced by conf.d/sni-watcher.toml.example via `introspection_xml`.
+
+  This is the authoritative source of D-Bus-side types for this interface
+  (docs/DESIGN_BRIEF_V1.md Section 3.5) - the JSON -> D-Bus conversion direction uses
+  this to disambiguate numeric types and D-Bus-only types when translating
+  Varlink replies/pushes back into D-Bus replies/signals.
+
+  This is a trimmed illustrative example, not a complete or verified copy
+  of the real freedesktop SNI specification - verify against the current
+  spec before shipping.
+-->
+<node name="/StatusNotifierWatcher">
+  <interface name="org.kde.StatusNotifierWatcher">
+    <method name="RegisterStatusNotifierItem">
+      <arg name="service" type="s" direction="in"/>
+    </method>
+    <property name="RegisteredStatusNotifierItems" type="as" access="read"/>
+    <signal name="StatusNotifierItemRegistered">
+      <arg name="service" type="s"/>
+    </signal>
+  </interface>
+</node>

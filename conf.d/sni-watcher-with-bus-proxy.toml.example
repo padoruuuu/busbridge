@@ -1,0 +1,52 @@
+# Demonstrates the two halves needed to move an app like sni.rs entirely
+# to Varlink, with zero D-Bus code on the app's side:
+#
+#   1. [[method]]/[[signal]] (or passthrough=true): lets the app RECEIVE
+#      D-Bus calls for a name it owns (here, org.kde.StatusNotifierWatcher
+#      - so tray applications like Discord/Steam/etc, which only speak
+#      real D-Bus, can register with it exactly as they always have).
+#
+#   2. [varlink].bus_proxy_listen: lets the app act as a full D-Bus
+#      CLIENT against those same tray applications afterwards - fetching
+#      their icons/properties, watching their signals, calling their
+#      DBusMenu objects - entirely over Varlink. See
+#      src/dbus/bus_proxy.rs's module doc comment for the wire protocol
+#      (Call / Introspect / GetProperty / GetAllProperties / SetProperty /
+#      Subscribe).
+#
+# SECURITY: bus_proxy_listen grants whoever can reach that socket the same
+# practical trust as a process connected directly to the session bus -
+# it can call ANY method on ANY name reachable there, not just tray
+# applications. Only enable it for a backend you trust with that.
+
+[service]
+bus = "session"
+name = "org.kde.StatusNotifierWatcher"
+object_path = "/StatusNotifierWatcher"
+introspection_xml = "sni-watcher.xml"
+idle_timeout_secs = 300
+
+[varlink]
+# Inbound: tray apps' RegisterStatusNotifierItem calls forward here.
+listen = "unix:/run/user/1000/busbridge/sni-watcher-push.sock"
+backend = "unix:/run/user/1000/sni-watcher-backend.sock"
+# Outbound: the Varlink-only watcher backend uses THIS socket to query
+# and interact with whichever tray app just registered - a bus name it
+# can't know ahead of time and therefore can't express as static config.
+bus_proxy_listen = "unix:/run/user/1000/busbridge/sni-watcher-busproxy.sock"
+
+[[method]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_method = "RegisterStatusNotifierItem"
+varlink_method = "org.example.tray.Register"
+args = ["service"]
+
+[[signal]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_signal = "StatusNotifierItemRegistered"
+direction = "inbound_push"
+
+[[property]]
+dbus_interface = "org.kde.StatusNotifierWatcher"
+dbus_property = "RegisteredStatusNotifierItems"
+varlink_method = "org.example.tray.ListRegistered"

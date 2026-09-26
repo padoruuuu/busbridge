@@ -1,0 +1,23 @@
+# A "resolve-only" config file: no [service] block at all, just routing
+# entries for the standard org.varlink.resolver.Resolve protocol
+# (src/dbus/resolver.rs). This bridge never RequestName's anything from a
+# [[resolve]] entry - the destination is very often owned by a completely
+# different, unrelated process (that's the whole point).
+#
+# Any Varlink client can now:
+#   1. Connect to /run/varlink/varlink.sock (or $BUSBRIDGE_RESOLVER_SOCKET)
+#   2. Call org.varlink.resolver.Resolve({"interface": "org.example.Greeter"})
+#      -> {"address": "unix:/run/varlink/varlink.sock"} (this daemon's own address)
+#   3. Reuse that SAME connection to call org.example.Greeter.SayHello
+#      with named JSON parameters - typed via live introspection of the
+#      real target, no further config needed.
+#
+# [[resolve]] entries can live in the same file as a [service] block too
+# (e.g. to make a service this bridge itself owns also independently
+# resolvable) - this example just shows the minimal standalone case.
+
+[[resolve]]
+interface = "org.example.Greeter"
+destination = "org.example.GreeterApp"
+path = "/org/example/Greeter"
+bus = "session"
